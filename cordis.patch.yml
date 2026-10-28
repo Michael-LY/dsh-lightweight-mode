@@ -1,0 +1,8 @@
+# dsh-lightweight-mode plugin row (inserted by the bundle patch)
+- insert:
+    - id: lightweight-mode
+      name: 'dsh-lightweight-mode'
+      config:
+        enabled: true
+        delaySeconds: 30
+        mode: auto
