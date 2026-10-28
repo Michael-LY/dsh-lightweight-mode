@@ -30,6 +30,7 @@ DSH Desktop（DeepSeek Harness 桌面端）的「轻量模式」套件：关闭�
    - **macOS / Linux**：对渲染相关子进程发送 `SIGSTOP` 信号挂起（停止 CPU 轮询与内存扩张，交由系统内存压缩机制回收）。
 3. **极速唤醒**：当窗口触发 `show` 或 `focus` 时，取消定时器并按需瞬间换入恢复（POSIX 发送 `SIGCONT`），用户体验无缝连贯。
 4. **统一配置中心**：配置持久化于 `~/.dsh/lightweight-mode.json`，系统托盘菜单与侧边栏设置面板双向实时同步。
+5. **托盘状态实时同步**：Windows 下内核接管托盘右键，每次弹出菜单前依据当前状态刷新「立即释放界面内存 / 立即恢复界面内存」与「状态：已释放（workingset）/ 未释放」；点按后状态立即更新，不再出现"点了释放但状态仍显示未释放"。
 
 ---
 
@@ -69,6 +70,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-plugin.ps1
 * 启动 DSH 后，侧边栏「设置」中将出现崭新的「轻量模式」面板。
 * *若已安装过插件，修改前端代码后只需在 DSH 窗口按 <kbd>Ctrl</kbd> + <kbd>R</kbd> 即可热刷新生效。*
 
+### 3. 更新内核补丁
+
+修改 `lib/patch/kernel.js`（托盘菜单、内存释放逻辑等）后需重新注入。标准流程（推荐，两步均要求 **DSH 已完全退出**）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\uninstall.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1
+```
+
+> 若无法退出 DSH（例如正在 DSH 内运行），可按 AGENTS.md 第 10 节的「应急在线更新内核」等价替换 `app.asar.unpacked/lib/main.js` 中的 kernel 段并重算 header、校验后再重启。**无论哪种方式，更新后都必须完全退出并重开 DSH 才会加载新内核（主进程代码不热重载）。**
+
 ---
 
 ## 卸载与无损回滚
@@ -95,6 +107,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-plugin.ps1
 | **Windows** | `EmptyWorkingSet` | 显著释放渲染与 GPU 进程工作集（降幅通常达几百 MB 至数 GB） | 系统按需秒级换入，无缝唤醒 |
 | **macOS / Linux** | `SIGSTOP` 冻结 | 阻止进程无谓占用 CPU 及扩展内存，依赖系统内存压缩 | 发送 `SIGCONT`，瞬间恢复 |
 
+> **托盘菜单实现差异**：**Windows** 接管右键、每次弹出前刷新重建（`popUpContextMenu`，异常回退 `menu.popup()`），释放/恢复状态实时；**macOS / Linux** 沿用原生静态 `setContextMenu`（label 经 `syncLabels()` 更新，是否即时重绘取决于平台）。
+
 ---
 
 ## 调试与验证工具
@@ -111,3 +125,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\winstate.ps1
 # 校验当前 app.asar 补丁的完整性与哈希一致性
 python scripts\verify_patch.py --asar "<app.asar 路径>"
 ```
+
+---
+
+## 常见问题 / 故障排查
+
+- **点了「立即释放界面内存」很多次，状态仍显示「未释放」**：这是旧版静态托盘菜单不刷新的问题，现已通过「Windows 右键动态菜单 + `syncLabels()`」修复。请确认补丁为最新版并 **完全退出 DSH 后重启**（主进程 kernel 不热重载）；仍异常时查看 `~/.dsh/lightweight-mode.log` 是否有 `tray patch failed` / `tray popup error` / `menu popup fallback error`。
+- **托盘右键没有菜单**：确认运行在 Windows 且已加载最新 kernel（右键动态菜单依赖 `right-click` + `popUpContextMenu`，异常回退 `menu.popup()`）；若仍无菜单，检查日志并确认 DSH 已重启。
+- **改了代码不生效**：主进程 kernel 变更需重装/重注入并重启 DSH；前端插件变更按 <kbd>Ctrl</kbd> + <kbd>R</kbd> 热刷新即可。
+- **补丁校验失败**：运行 `python scripts\verify_patch.py --asar "<路径>"` 查看 size/sha 是否匹配；不匹配通常表示 `app.asar` 已被 DSH 升级替换，需重装补丁。
