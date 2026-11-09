@@ -11,6 +11,8 @@ DSH Desktop（Electron 桌面端）的「轻量模式」：窗口关闭到托盘
 1. **桌面内核补丁（路线 A）**：只改 app.asar 头部并注入 kernel 到 main.js，hook DSH 原生托盘，追加「轻量模式」控制项与状态行。**Windows 下接管托盘右键、每次弹出前重建菜单以实时反映释放状态**（`popUpContextMenu`，`menu.popup()` 兜底）；mac/Linux 仍沿用原生静态菜单。可一键回滚，数据区不动。
 2. **DSH 插件包**：在侧边栏「设置」加「轻量模式」面板（原生 Design Token 风格），与托盘/内核共享同一份配置文件。
 
+当前适配并验证的 DSH Desktop 版本：**0.2.2-rc.1**（`resources/app.asar` 内 `@deepseek-ai/dsh-desktop-runtime@0.2.2-rc.1`）。插件清单在 `package.json` 顶层 `engines.dsh`（运行时校验）与 `dsh.engines.dsh`（插件市场元数据）声明兼容范围 `>=0.2.0-rc.2 <0.3.0-0`，并在 `dsh.compatibility.dshReleases` 记录已验证版本；DSH 升级替换 `app.asar` 后需重跑 `scripts/install.ps1`。
+
 ## 2. 架构 / 数据流
 
 共享配置：`~/.dsh/lightweight-mode.json`（可用环境变量 DSH_HOME 覆盖目录）。字段：
@@ -154,4 +156,5 @@ docs/design.md（v0.1，2026-10-28）提出的是「**零改 DSH**」方案：
 - 改了 lib/patch/kernel.js：先 uninstall 再 install，然后 verify_patch.py 应输出 VERIFY_OK；**之后完全退出并重开 DSH** 加载新内核。
 - **应急在线更新内核（DSH 运行中、无法走 uninstall→install）**：取现行 `app.asar.unpacked/lib/main.js`，把其中 `/* ===== dsh-lightweight-mode kernel` 至 `/* ===== end dsh-lightweight-mode kernel ===== */` 段替换为新的 `lib/patch/kernel.js` 内容；重算 `sha256`/`size` 写回 asar header 的 `main.js` 条目，并同步 `state/patch-state.json`（**`backupDir` 必须仍指向未打补丁的原始备份**，作为回滚锚点）；`verify_patch.py` 应 `VERIFY_OK`，再重启 DSH。此为等价替换、不改 asar 数据区，但标准流程仍以 uninstall→install 为准。
 - 改了插件（client/index）：重跑 install-plugin.ps1（可先 -DryRun 预览 profile package.json 变更）；已存在 junction 时客户端按 Ctrl+R 即可热加载生效。
+- **DSH 运行中补丁丢失（版本升级后）**：`install.ps1` 的进程检查会拒绝执行；可提权直接运行 `python scripts\apply_patch.py --asar ... --kernel ... --backup-dir ... --state-file ...` 在线写入（只改 asar 头部与 unpacked main.js），`verify_patch.py` 输出 `VERIFY_OK` 后仍需完全退出并重开 DSH 才生效。
 - 验证压缩效果：measure.ps1 -Seconds 60 → 关窗等待 delay → 看 total_mb 是否下降；winstate.ps1 确认窗口已隐藏。
