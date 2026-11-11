@@ -11,7 +11,7 @@ DSH Desktop（Electron 桌面端）的「轻量模式」：窗口关闭到托盘
 1. **桌面内核补丁（路线 A）**：只改 app.asar 头部并注入 kernel 到 main.js，hook DSH 原生托盘，追加「轻量模式」控制项与状态行。**Windows 下接管托盘右键、每次弹出前重建菜单以实时反映释放状态**（`popUpContextMenu`，`menu.popup()` 兜底）；mac/Linux 仍沿用原生静态菜单。可一键回滚，数据区不动。
 2. **DSH 插件包**：在侧边栏「设置」加「轻量模式」面板（原生 Design Token 风格），与托盘/内核共享同一份配置文件。
 
-当前适配并验证的 DSH Desktop 版本：**0.2.2-rc.1**（`resources/app.asar` 内 `@deepseek-ai/dsh-desktop-runtime@0.2.2-rc.1`）。插件清单在 `package.json` 顶层 `engines.dsh`（运行时校验）与 `dsh.engines.dsh`（插件市场元数据）声明兼容范围 `>=0.2.0-rc.2 <0.3.0-0`，并在 `dsh.compatibility.dshReleases` 记录已验证版本；DSH 升级替换 `app.asar` 后需重跑 `scripts/install.ps1`。
+当前适配并验证的 DSH Desktop 版本：**0.2.2-rc.2**（`resources/app.asar` 内 `@deepseek-ai/dsh-desktop-runtime@0.2.2-rc.2`）。插件清单在 `package.json` 顶层 `engines.dsh`（运行时校验）与 `dsh.engines.dsh`（插件市场元数据）声明兼容范围 `>=0.2.0-rc.2 <0.3.0-0`，并在 `dsh.compatibility.dshReleases` 记录已验证版本；DSH 升级替换 `app.asar` 后需重跑 `scripts/install.ps1`。
 
 ## 2. 架构 / 数据流
 
