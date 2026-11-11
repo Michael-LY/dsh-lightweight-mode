@@ -3,3 +3,8 @@ backups/
 state/
 *.log
 .DS_Store
+__pycache__/
+*.pyc
+*.tgz
+_probe.py
+_verify_*/
