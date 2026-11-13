@@ -50,9 +50,9 @@ DSH Desktop（DeepSeek Harness 桌面端）的「轻量模式」套件：关闭�
 
 | 项目 | 说明 |
 |---|---|
-| 已验证的 DSH Desktop | **0.2.2-rc.2**（`@deepseek-ai/dsh-desktop-runtime@0.2.2-rc.2`） |
+| 已验证的 DSH Desktop | **0.2.2-rc.3**（`@deepseek-ai/dsh-desktop@0.2.2-rc.3`） |
 | 声明兼容范围 | `engines.dsh`（运行时校验）与 `dsh.engines.dsh`（插件市场元数据）：`>=0.2.0-rc.2 <0.3.0-0` |
-| 内核补丁锚点 | 已对齐 0.2.2-rc.2 的 `lib/main.js` import 结构（`BrowserWindow, Menu, Notification, Tray, ...`） |
+| 内核补丁锚点 | 已对齐 0.2.2-rc.3 的 `lib/main.js` import 结构（`BrowserWindow, Menu, Notification, Tray, ...`） |
 
 > DSH Desktop 升级会替换 `app.asar`，内核补丁随之失效；升级后请重新执行 `scripts\install.ps1`，并用 `scripts\verify_patch.py` 校验。
 
