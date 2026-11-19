@@ -8,3 +8,5 @@ __pycache__/
 *.tgz
 _probe.py
 _verify_*/
+.tmp_verify/
+.npm-cache*/
